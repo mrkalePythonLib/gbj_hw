@@ -46,12 +46,12 @@ _pins = {}
 ###############################################################################
 # Internal functions
 ###############################################################################
-def _check_pin(pin):
+def _check_pin(pin: int):
     """Check port pin and register it.
 
     Arguments
     ---------
-    pin : int
+    pin
         Pin identification from the module `port`, e.g., 'port.PA13',
         or module 'connector', e.g., 'connector.gpio1p8'.
 
@@ -66,16 +66,16 @@ def _check_pin(pin):
         if pin not in _pins.keys():
             _pins[pin] = {}
     else:
-        errmsg = "Unknown pin {}".format(pin)
+        errmsg = f'Unknown {pin=}'
         raise NameError(errmsg)
 
 
-def _check_mode(mode):
+def _check_mode(mode: int):
     """Check pin mode.
 
     Arguments
     ---------
-    mode : int
+    mode
         Mode identification from this module, e.g., OUTPUT.
 
     Raises
@@ -85,16 +85,16 @@ def _check_mode(mode):
 
     """
     if mode not in [PULLNONE, PULLUP, PULLDOWN]:
-        errmsg = "Unknown pin mode {}".format(mode)
+        errmsg = f'Unknown pin {mode=}'
         raise ValueError(errmsg)
 
 
-def _check_pull(pull):
+def _check_pull(pull: int):
     """Check pin pull action.
 
     Arguments
     ---------
-    pull : int
+    pull
         Pull action identification from this module, e.g., PULLUP.
 
     Raises
@@ -104,16 +104,16 @@ def _check_pull(pull):
 
     """
     if pull not in [INPUT, OUTPUT]:
-        errmsg = "Unknown pin pull {}".format(pull)
+        errmsg = f'Unknown pin {pull=}'
         raise ValueError(errmsg)
 
 
-def _check_value(value):
+def _check_value(value: int):
     """Check available pin values.
 
     Arguments
     ---------
-    value : int
+    value
         Binary value from this module, e.g., HIGH.
 
     Raises
@@ -123,7 +123,7 @@ def _check_value(value):
 
     """
     if value not in [LOW, HIGH]:
-        errmsg = "Unknown pin value {}".format(value)
+        errmsg = f'Unknown pin {value=}'
         raise ValueError(errmsg)
 
 
@@ -140,10 +140,7 @@ def init():
     # Logging
     _logger = logging.getLogger(' '.join([__name__, __version__]))
     _logger.debug(
-        'Instance of %s created: %s',
-        __name__,
-        'GPIO simulator'
-        )
+        f'Instance of "{__name__}" created: GPIO simulator')
 
 
 def setcfg(pin, mode):
@@ -161,7 +158,7 @@ def setcfg(pin, mode):
         _check_pin(pin)
         _check_mode(mode)
         _pins[pin][Feature.MODE] = mode
-    except NameError or ValueError as errmsg:
+    except (NameError, ValueError) as errmsg:
         _logger.error(errmsg)
 
 
@@ -184,7 +181,7 @@ def getcfg(pin):
     try:
         _check_pin(pin)
         return _pins[pin][Feature.MODE]
-    except NameError or TypeError as errmsg:
+    except (NameError, ValueError) as errmsg:
         _logger.error(errmsg)
     except KeyError:
         pass
@@ -208,7 +205,7 @@ def pullup(pin, pull):
         _check_pin(pin)
         _check_pull(pull)
         _pins[pin][Feature.PULL] = pull
-    except NameError or ValueError as errmsg:
+    except (NameError, ValueError) as errmsg:
         _logger.error(errmsg)
 
 
@@ -229,7 +226,7 @@ def output(pin, value):
         _check_pin(pin)
         _check_value(value)
         _pins[pin][Feature.VALUE] = value
-    except NameError or ValueError as errmsg:
+    except (NameError, ValueError) as errmsg:
         _logger.error(errmsg)
 
 
@@ -252,7 +249,7 @@ def input(pin):
     try:
         _check_pin(pin)
         return _pins[pin][Feature.VALUE]
-    except NameError or TypeError as errmsg:
+    except (NameError, ValueError) as errmsg:
         _logger.error(errmsg)
     except KeyError:
         pass

@@ -21,7 +21,24 @@ __email__ = "libor.gabaj@gmail.com"
 
 
 import logging
+from typing import NoReturn
 from . import gpio, port, connector
+
+
+def pinmap(func):
+    """Decorator for mapping and checking a GPIO pin."""
+    def _decorator(self, pin: str):
+        if pin in dir(port):
+            port_num = getattr(port, pin)
+        elif pin in dir(connector):
+            port_num = getattr(connector, pin)
+        else:
+            port_num = None
+            errmsg = f'Unknown {pin=}'
+            self._logger.error(errmsg)
+        if port_num:
+            return func(self, port_num)
+    return _decorator
 
 
 ###############################################################################
@@ -70,216 +87,75 @@ class OrangePiOne(object):
         # Logging
         self._logger = logging.getLogger(' '.join([__name__, __version__]))
         self._logger.debug(
-            'Instance of %s created: %s',
-            self.__class__.__name__,
-            str(self)
-            )
+            f'Instance of "{self.__class__.__name__}" created: {self}')
 
     def __str__(self):
         """Represent instance object as a string."""
         return self.__class__.__name__
 
-    def _convert_pin_port(self, pin):
-        """Convert pin name to port number.
+    def __repr__(self) -> str:
+        """Represent instance object officially."""
+        msg = f'{self.__class__.__name__}()'
+        return msg
 
-        Arguments
-        ---------
-        pin : str
-            Name of a pin in form of either ``port`` or ``connector``.
+    @pinmap
+    def pin_on(self, pin: str) -> NoReturn:
+        """Set pin as OUTPUT and to HIGH."""
+        gpio.setcfg(pin, gpio.OUTPUT)
+        gpio.output(pin, gpio.HIGH)
 
-        Returns
-        -------
-        portnum : int
-            SoC port number (offset) of the pin or 0.
+    @pinmap
+    def pin_off(self, pin: str) -> NoReturn:
+        """Set pin as OUTPUT and to LOW."""
+        gpio.setcfg(pin, gpio.OUTPUT)
+        gpio.output(pin, gpio.LOW)
 
-        """
-        if pin in dir(port):
-            port_num = getattr(port, pin)
-        elif pin in dir(connector):
-            port_num = getattr(connector, pin)
+    def pin_toggle(self, pin: str) -> NoReturn:
+        """Set pin as OUTPUT and invert its state."""
+        if self.is_pin_on(pin):
+            self.pin_off(pin)
         else:
-            errmsg = "Unknown pin {}".format(pin)
-            self._logger.error(errmsg)
-            return 0
-        return port_num
+            self.pin_on(pin)
 
-    def pin_on(self, pin):
-        """Set pin as OUTPUT and to HIGH.
+    @pinmap
+    def pin_pullup(self, pin: str) -> NoReturn:
+        """Set PULLUP of pin."""
+        gpio.pullup(pin, gpio.PULLUP)
 
-        Arguments
-        ---------
-        pin : str
-            Name of a pin in form either `port` or `connector`.
+    @pinmap
+    def pin_pulldown(self, pin: str) -> NoReturn:
+        """Set PULLDOWN of pin."""
+        gpio.pullup(pin, gpio.PULLDOWN)
 
-        Raises
-        ------
-        NameError
-            Pin name is defined neither among ports nor connectors.
-            Error message included to the exception.
+    @pinmap
+    def pin_pullclear(self, pin: str) -> NoReturn:
+        """Reset PULLUP or PULLDOWN of pin."""
+        gpio.pullup(pin, gpio.PULLNONE)
 
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            gpio.setcfg(port_num, gpio.OUTPUT)
-            gpio.output(port_num, gpio.HIGH)
+    @pinmap
+    def pin_read(self, pin: str) -> int:
+        """Set pin as INPUT and read its state."""
+        gpio.setcfg(pin, gpio.INPUT)
+        return gpio.input(pin)
 
-    def pin_off(self, pin):
-        """Set pin as OUTPUT and to LOW.
+    @pinmap
+    def pin_state(self, pin: str) -> int:
+        """Return pin state without changing its mode."""
+        return gpio.input(pin)
 
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
+    @pinmap
+    def is_pin_on(self, pin: str) -> bool:
+        """Return flag about pin state HIGH."""
+        return gpio.input(pin) == gpio.HIGH
 
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            gpio.setcfg(port_num, gpio.OUTPUT)
-            gpio.output(port_num, gpio.LOW)
-
-    def pin_toggle(self, pin):
-        """Set pin as OUTPUT and invert its state.
-
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            port_state = gpio.HIGH
-            if gpio.input(port_num) == gpio.HIGH:
-                port_state = gpio.LOW
-            gpio.setcfg(port_num, gpio.OUTPUT)
-            gpio.output(port_num, port_state)
-
-    def pin_pullup(self, pin):
-        """Set PULLUP of pin.
-
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            gpio.pullup(port_num, gpio.PULLUP)
-
-    def pin_pulldown(self, pin):
-        """Set PULLDOWN of pin.
-
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        gpio.pullup(port_num, gpio.PULLDOWN)
-
-    def pin_pullclear(self, pin):
-        """Reset PULLUP or PULLDOWN of pin.
-
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            gpio.pullup(port_num, gpio.PULLNONE)
-
-    def pin_read(self, pin, mode=gpio.INPUT):
-        """Set pin as INPUT and read its state.
-
-        Returns
-        -------
-        pin_state : {gpio.HIGH, gpio.LOW}
-            Current state of the pin or None
-
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            gpio.setcfg(port_num, gpio.INTPUT)
-            value = gpio.input(port_num)
-            return value
-
-    def pin_state(self, pin):
-        """Return pin state without changing its mode.
-
-        Returns
-        -------
-        pin_state : {gpio.HIGH, gpio.LOW}
-            Current state of the pin or None
-
-        See Also
-        --------
-        pin_on : Arguments, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            value = gpio.input(port_num)
-            return value
-
-    def is_pin_on(self, pin):
-        """Return flag about pin state HIGH.
-
-        Arguments
-        ---------
-        pin : str
-            Name of a pin in form either `port` or `connector`.
-            *The argument is mandatory and has no default value.*
-
-        Returns
-        -------
-        flag_high : bool
-            Logical flag about pin state HIGH or None.
-            True if HIGH or False for LOW.
-
-        Raises
-        ------
-        NameError
-            Pin name is defined neither among ports nor connectors.
-            Error message included to the exception.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            return gpio.input(port_num) == gpio.HIGH
-
-    def is_pin_off(self, pin):
-        """Return flag about pin state LOW.
-
-        See Also
-        --------
-        is_pin_on : Arguments, Returns, Raises are the same, see docstrings.
-
-        """
+    def is_pin_off(self, pin: str) -> bool:
+        """Return flag about pin state LOW."""
         return not self.is_pin_on(pin)
 
-    def is_pin_output(self, pin):
-        """Return flag about pin mode OUTPUT.
+    def is_pin_output(self, pin: str) -> bool:
+        """Return flag about pin mode OUTPUT."""
+        return self.pin_state(pin) == gpio.OUTPUT
 
-        See Also
-        --------
-        is_pin_on : Arguments, Returns, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            return gpio.getcfg(port_num) == gpio.OUTPUT
-
-    def is_pin_input(self, pin):
-        """Return flag about pin mode INPUT.
-
-        See Also
-        --------
-        is_pin_on : Arguments, Returns, Raises are the same, see docstrings.
-
-        """
-        port_num = self._convert_pin_port(pin)
-        if port_num:
-            return gpio.getcfg(port_num) == gpio.INPUT
+    def is_pin_input(self, pin: str) -> bool:
+        """Return flag about pin mode INPUT."""
+        return self.pin_state(pin) == gpio.INPUT
