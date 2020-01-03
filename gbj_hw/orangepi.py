@@ -34,8 +34,8 @@ def pinmap(func):
             port_num = getattr(connector, pin)
         else:
             port_num = None
-            errmsg = f'Unknown {pin=}'
-            self._logger.error(errmsg)
+            log = f'Unknown {pin=}'
+            self._logger.error(log)
         if port_num:
             return func(self, port_num)
     return _decorator
@@ -85,9 +85,9 @@ class OrangePiOne(object):
         # Hardware initialization
         gpio.init()
         # Logging
+        log = f'Instance of "{self.__class__.__name__}" created: {self}'
         self._logger = logging.getLogger(' '.join([__name__, __version__]))
-        self._logger.debug(
-            f'Instance of "{self.__class__.__name__}" created: {self}')
+        self._logger.debug(log)
 
     def __str__(self):
         """Represent instance object as a string."""
@@ -95,8 +95,7 @@ class OrangePiOne(object):
 
     def __repr__(self) -> str:
         """Represent instance object officially."""
-        msg = f'{self.__class__.__name__}()'
-        return msg
+        return f'{self.__class__.__name__}()'
 
     @pinmap
     def pin_on(self, pin: str) -> NoReturn:
@@ -152,10 +151,12 @@ class OrangePiOne(object):
         """Return flag about pin state LOW."""
         return not self.is_pin_on(pin)
 
+    @pinmap
     def is_pin_output(self, pin: str) -> bool:
         """Return flag about pin mode OUTPUT."""
-        return self.pin_state(pin) == gpio.OUTPUT
+        return gpio.getcfg(pin) == gpio.OUTPUT
 
+    @pinmap
     def is_pin_input(self, pin: str) -> bool:
         """Return flag about pin mode INPUT."""
-        return self.pin_state(pin) == gpio.INPUT
+        return gpio.getcfg(pin) == gpio.INPUT

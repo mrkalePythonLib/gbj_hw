@@ -3,7 +3,7 @@
 __version__ = "0.1.0"
 __status__ = "Beta"
 __author__ = "Libor Gabaj"
-__copyright__ = "Copyright 2019, " + __author__
+__copyright__ = "Copyright 2019-2020, " + __author__
 __credits__ = []
 __license__ = "MIT"
 __maintainer__ = __author__
@@ -66,8 +66,8 @@ def _check_pin(pin: int):
         if pin not in _pins.keys():
             _pins[pin] = {}
     else:
-        errmsg = f'Unknown {pin=}'
-        raise NameError(errmsg)
+        log = f'Unknown {pin=}'
+        raise NameError(log)
 
 
 def _check_mode(mode: int):
@@ -84,9 +84,9 @@ def _check_mode(mode: int):
         Pin mode is not defined in this module.
 
     """
-    if mode not in [PULLNONE, PULLUP, PULLDOWN]:
-        errmsg = f'Unknown pin {mode=}'
-        raise ValueError(errmsg)
+    if mode not in [INPUT, OUTPUT]:
+        log = f'Unknown pin {mode=}'
+        raise ValueError(log)
 
 
 def _check_pull(pull: int):
@@ -103,9 +103,9 @@ def _check_pull(pull: int):
         Pin pull action is not defined in this module.
 
     """
-    if pull not in [INPUT, OUTPUT]:
-        errmsg = f'Unknown pin {pull=}'
-        raise ValueError(errmsg)
+    if pull not in [PULLNONE, PULLUP, PULLDOWN]:
+        log = f'Unknown pin {pull=}'
+        raise ValueError(log)
 
 
 def _check_value(value: int):
@@ -123,8 +123,8 @@ def _check_value(value: int):
 
     """
     if value not in [LOW, HIGH]:
-        errmsg = f'Unknown pin {value=}'
-        raise ValueError(errmsg)
+        log = f'Unknown pin {value=}'
+        raise ValueError(log)
 
 
 ###############################################################################
