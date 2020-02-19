@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """Setup function for the package."""
 
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 setup(
     name='gbj_hw',
-    version='1.4.0',
+    version='1.4.1',
     description='Python libraries for hardware support.',
     long_description=(
         'Modules suitable for utilizing Pi microcomputers,'
@@ -24,7 +24,7 @@ setup(
     author='Libor Gabaj',
     author_email='libor.gabaj@gmail.com',
     license='MIT',
-    packages=['gbj_hw'],
+    packages=find_namespace_packages(),
     install_requires=[],
     include_package_data=True,
     zip_safe=False
